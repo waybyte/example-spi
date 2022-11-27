@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
 		/* Following is an example to read device ID information from SPI Flash memory */
 #ifdef SOC_RDA8910
 		/**
-		 * RD8910 SPI Hardware chipselect line is not a GPIO but
+		 * RDA8910 SPI Hardware chipselect line is not a GPIO but
 		 * can be controlled manually
 		 */
 		spi_hw_cscontrol(SPI_HW_PORT, 0);
