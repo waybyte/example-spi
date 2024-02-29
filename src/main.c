@@ -18,13 +18,22 @@
 #include <hw/spi.h>
 
 #ifndef SOC_RDA8910
-#define CS_GPIO	GPIO_0
 #define STDIO_PORT "/dev/ttyS0"
 #else
 #define STDIO_PORT "/dev/ttyUSB0"
 #endif
 
+#ifdef PLATFORM_LOGICROM_SPARK
+// #define USE_SPI_HW_CHIPSELECT
+#ifdef USE_SPI_HW_CHIPSELECT
+#else
+#define CS_GPIO	GPIO_23
+#endif
+#define SPI_HW_PORT SPI_PORT_1
+#else
+#define CS_GPIO	GPIO_0
 #define SPI_HW_PORT SPI_PORT_0
+#endif
 
 #define SPIF_ENABLE_RESET 0x66
 #define SPIF_RESET_DEVICE 0x99
@@ -132,7 +141,7 @@ static void urc_callback(unsigned int param1, unsigned int param2)
 int main(int argc, char *argv[])
 {
 	int ret, count, i;
-#ifndef SOC_RDA8910
+#ifndef USE_SPI_HW_CHIPSELECT
 	int cs_handle = 0;
 #endif
 	uint8_t buf[4] = { 0 };
@@ -152,7 +161,7 @@ int main(int argc, char *argv[])
 			break;
 		
 		/* Following is an example to read device ID information from SPI Flash memory */
-#ifdef SOC_RDA8910
+#ifdef USE_SPI_HW_CHIPSELECT
 		/**
 		 * RDA8910 SPI Hardware chipselect line is not a GPIO but
 		 * can be controlled manually
@@ -168,21 +177,21 @@ int main(int argc, char *argv[])
 #endif
 		buf[0] = SPIF_ENABLE_RESET;
 		spi_hw_transfer(SPI_HW_PORT, buf, NULL, 1);
-#ifdef SOC_RDA8910
+#ifdef USE_SPI_HW_CHIPSELECT
 		spi_hw_cscontrol(SPI_HW_PORT, 1);
 #else
 		gpio_write(cs_handle, 1);
 #endif
 
 		/* Send Device reset */
-#ifdef SOC_RDA8910
+#ifdef USE_SPI_HW_CHIPSELECT
 		spi_hw_cscontrol(SPI_HW_PORT, 0);
 #else
 		gpio_write(cs_handle, 0);
 #endif
 		buf[0] = SPIF_RESET_DEVICE;
 		spi_hw_transfer(SPI_HW_PORT, buf, NULL, 1);
-#ifdef SOC_RDA8910
+#ifdef USE_SPI_HW_CHIPSELECT
 		spi_hw_cscontrol(SPI_HW_PORT, 1);
 #else
 		gpio_write(cs_handle, 1);
@@ -191,7 +200,7 @@ int main(int argc, char *argv[])
 		os_task_sleep(100);
 		
 		/* Read JEDEC ID */
-#ifdef SOC_RDA8910
+#ifdef USE_SPI_HW_CHIPSELECT
 		spi_hw_cscontrol(SPI_HW_PORT, 0);
 #else
 		gpio_write(cs_handle, 0);
@@ -199,7 +208,7 @@ int main(int argc, char *argv[])
 		buf[0] = SPIF_READ_JEDECID;
 		spi_hw_transfer(SPI_HW_PORT, buf, NULL, 1);
 		spi_hw_transfer(SPI_HW_PORT, NULL, buf, 3);
-#ifdef SOC_RDA8910
+#ifdef USE_SPI_HW_CHIPSELECT
 		spi_hw_cscontrol(SPI_HW_PORT, 1);
 #else
 		gpio_write(cs_handle, 1);
@@ -215,7 +224,7 @@ int main(int argc, char *argv[])
 	} while (0);
 
 	spi_hw_free(SPI_HW_PORT);
-#ifndef SOC_RDA8910
+#ifndef USE_SPI_HW_CHIPSELECT
 	if (cs_handle)
 		gpio_free(cs_handle);
 #endif
