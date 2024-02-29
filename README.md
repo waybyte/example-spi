@@ -1,4 +1,4 @@
-# Logicrom SDK - Hardware SPI driver example
+# Logicrom OpenCPU SDK - Hardware SPI driver example
 
 ## How to build
 
